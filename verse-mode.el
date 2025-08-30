@@ -220,7 +220,7 @@
   "Major mode for editing Verse (UEFN) source files.
 
 Verse is a functional logic programming language developed by Epic Games
-for use in Unreal Editor for Fortnite (UEFN). This mode provides:
+for use in Unreal Editor for Fortnite (UEFN).  This mode provides:
 
 - Comprehensive syntax highlighting for keywords, types, and specifiers
 - Support for single-line (#) and block (<# ... #>) comments
