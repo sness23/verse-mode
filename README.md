@@ -26,16 +26,6 @@ make compile
 make test
 ```
 
-## MELPA submission steps
-1. Push to a public repo (GitHub recommended).
-2. Add this recipe to `melpa/recipes/` and open a PR:
-   ```lisp
-   (verse-mode
-    :repo "yourname/verse-mode"
-    :fetcher github)
-   ```
-3. After merge, MELPA will build `verse-mode` automatically.
-
 ## Roadmap
 - Better indentation (parse `:=`, blocks, and braces)
 - String interpolation font-lock inside `"{...}"`
