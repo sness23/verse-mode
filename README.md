@@ -8,9 +8,6 @@ An Emacs **major mode** for [Verse](https://dev.epicgames.com/documentation/en-u
 - Simple indentation heuristic
 - Imenu for functions, classes, and modules
 - `auto-mode-alist` for `*.verse` files
-- Minimal test + CI + MELPA recipe
-
-> Note: Verse docs: quick reference and comment syntax are on Epic's site. See links inline in the source.
 
 ## Install locally
 ```elisp
