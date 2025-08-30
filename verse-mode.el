@@ -1,30 +1,28 @@
 ;;; verse-mode.el --- Major mode for Epic's Verse language (UEFN) -*- lexical-binding: t; -*-
-;; Author: Your Name <you@example.com>
-;; Maintainer: Your Name <you@example.com>
-;; Version: 0.1.0
+;; Author: Steven Ness <sness@sness.net>
+;; Maintainer: Steven Ness <sness@sness.net>
+;; Version: 0.0.1
 ;; Package-Requires: ((emacs "26.1"))
 ;; Keywords: languages, tools
-;; URL: https://github.com/yourname/verse-mode
+;; URL: https://github.com/sness23/verse-mode
 ;; License: GPL-3.0-or-later
 
 ;;; Commentary:
 
-;; verse-mode provides comprehensive editing support for the Verse programming language used
-;; in Unreal Editor for Fortnite (UEFN): syntax highlighting, comment handling
-;; (single-line `#` and block `<# ... #>`), indentation, Imenu, and
-;; `auto-mode-alist` for `.verse` files.
+;; verse-mode provides comprehensive editing support for the Verse
+;; programming language used in Unreal Editor for Fortnite (UEFN):
+;; syntax highlighting, comment handling (single-line `#` and block
+;; `<# ... #>`), indentation, Imenu, and `auto-mode-alist` for
+;; `.verse` files.
 ;;
-;; Verse is a functional logic programming language developed by Epic Games that supports:
+;; Verse is a functional logic programming language developed by Epic
+;; Games that supports:
 ;; - First-class type system with effect system
 ;; - Mutable state and I/O effects
 ;; - Transactional memory
 ;; - Classes, structs, and inheritance
 ;; - Expression-based syntax
 ;;
-;; Docs:
-;; - Verse quick reference (Epic): https://dev.epicgames.com/documentation/en-us/fortnite/verse-language-quick-reference
-;; - Comments in Verse: https://dev.epicgames.com/documentation/en-us/fortnite/comments-in-verse
-;; - Modules and paths: https://dev.epicgames.com/documentation/en-us/fortnite/modules-and-paths-in-verse
 
 ;;; Code:
 
