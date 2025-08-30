@@ -29,7 +29,7 @@
 (require 'imenu)
 (require 'rx)
 
-(defgroup verse-mode nil
+(defgroup verse nil
   "Major mode for the Verse language."
   :group 'languages
   :prefix "verse-")
@@ -37,7 +37,7 @@
 (defcustom verse-indent-offset 4
   "Number of spaces for each indentation level."
   :type 'integer
-  :group 'verse-mode)
+  :group 'verse)
 
 ;; ----------------------------------------------------------------------------
 ;; Syntax table
@@ -142,8 +142,7 @@
     ;; Generic attributes/specifiers like <public>, <localizes> (fallback)
     (,(rx "<" (group (+ (or word ?_))) ">") 1 font-lock-preprocessor-face)
     ;; Variable names in var declarations
-    (,(rx "var" (+ space) (group (+ (or word ?_))) (* space) ":") 1 font-lock-variable-name-face)
-    ))
+    (,(rx "var" (+ space) (group (+ (or word ?_))) (* space) ":") 1 font-lock-variable-name-face)))
 
 ;; ----------------------------------------------------------------------------
 ;; Indentation
