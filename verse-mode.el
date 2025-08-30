@@ -9,17 +9,22 @@
 
 ;;; Commentary:
 
-;; verse-mode provides basic editing support for the Verse programming language used
+;; verse-mode provides comprehensive editing support for the Verse programming language used
 ;; in Unreal Editor for Fortnite (UEFN): syntax highlighting, comment handling
-;; (single-line `#` and block `<# ... #>`), simple indentation, Imenu, and
+;; (single-line `#` and block `<# ... #>`), indentation, Imenu, and
 ;; `auto-mode-alist` for `.verse` files.
+;;
+;; Verse is a functional logic programming language developed by Epic Games that supports:
+;; - First-class type system with effect system
+;; - Mutable state and I/O effects
+;; - Transactional memory
+;; - Classes, structs, and inheritance
+;; - Expression-based syntax
 ;;
 ;; Docs:
 ;; - Verse quick reference (Epic): https://dev.epicgames.com/documentation/en-us/fortnite/verse-language-quick-reference
 ;; - Comments in Verse: https://dev.epicgames.com/documentation/en-us/fortnite/comments-in-verse
 ;; - Modules and paths: https://dev.epicgames.com/documentation/en-us/fortnite/modules-and-paths-in-verse
-;;
-;; This is a minimal starter mode intended to get you productive quickly; PRs welcome!
 
 ;;; Code:
 
@@ -59,6 +64,12 @@
     (modify-syntax-entry ?\[ "(]" st)
     (modify-syntax-entry ?\] ")[" st)
 
+    ;; Assignment and comparison operators
+    (modify-syntax-entry ?: "." st)
+    (modify-syntax-entry ?= "." st)
+    (modify-syntax-entry ?< "." st)
+    (modify-syntax-entry ?> "." st)
+
     st)
   "Syntax table for `verse-mode'.")
 
@@ -71,22 +82,32 @@
   (funcall
    (syntax-propertize-rules
     ;; Open delimiter: `<#`
-    ((rx \"<#\") (0 \"<\"))
+    ((rx "<#") (0 "<"))
     ;; Close delimiter: `#>`
-    ((rx \"#>\") (0 \">\")))
+    ((rx "#>") (0 ">")))
    start end))
 
 ;; ----------------------------------------------------------------------------
-;; Font-lock (keywords)
+;; Font-lock (keywords and syntax highlighting)
 ;; ----------------------------------------------------------------------------
 (defconst verse--keywords
-  '(\"if\" \"else\" \"for\" \"loop\" \"break\" \"continue\" \"return\" \"block\"
-    \"var\" \"set\" \"module\" \"class\" \"struct\" \"where\" \"subtype\"
-    \"sync\" \"branch\" \"await\" \"concurrent\" \"try\" \"catch\" \"throw\"))
+  '("if" "else" "for" "loop" "break" "continue" "return" "block"
+    "var" "set" "module" "class" "struct" "where" "subtype" "enum"
+    "sync" "branch" "await" "concurrent" "try" "catch" "throw"
+    "using" "import" "spawn" "race" "select" "defer" "do"
+    "true" "false" "nil" "mut" "ref" "out" "in" "option"))
 
 (defconst verse--types
-  '(\"logic\" \"int\" \"float\" \"string\" \"message\" \"locale\" \"rational\" \"any\" \"void\"
-    \"array\" \"map\" \"tuple\" \"option\"))
+  '("logic" "int" "float" "string" "message" "locale" "rational" "any" "void"
+    "array" "map" "tuple" "option" "type" "comparable" "persistable"
+    "char" "byte" "[]" "weak_map" "event" "asset" "creative_device"
+    "player" "agent" "fort_character" "game" "creative_prop"))
+
+(defconst verse--specifiers
+  '("public" "private" "protected" "override" "abstract" "final" "native"
+    "localizes" "editable" "epic_internal" "experimental" "deprecated"
+    "transacts" "decides" "no_rollback" "suspends" "varies" "computes"
+    "converges" "query" "native_callable"))
 
 (defconst verse-font-lock-keywords
   `(
@@ -94,74 +115,136 @@
     (,(regexp-opt verse--keywords 'symbols) . font-lock-keyword-face)
     ;; Types
     (,(regexp-opt verse--types 'symbols) . font-lock-type-face)
-    ;; Function names:  Foo(args) : type =
+    ;; Specifiers in angle brackets like <public>, <localizes>
+    (,(concat "<\\(" (regexp-opt verse--specifiers) "\\)>") 1 font-lock-builtin-face)
+    ;; Assignment operator :=
+    (,(rx ":=") . font-lock-keyword-face)
+    ;; Function definitions: FunctionName(args) : type =
     (,(rx line-start (* space)
           (group (+ (or word ?_ ?.))) (* space)
-          \"(\") 1 font-lock-function-name-face)
-    ;; Module paths inside using {{ /Org/Module }}
-    (,(rx \"using\" (+ space) \"{\" (+ space) (group (+ (any ?/ ?_ ?. word))) (+ space) \"}\")
+          "(") 1 font-lock-function-name-face)
+    ;; Class/struct/module definitions: Name := class/struct/module
+    (,(rx line-start (* space)
+          (group (+ (or word ?_ ?.))) (* space)
+          ":=" (* space)
+          (or "class" "struct" "module" "enum")) 1 font-lock-type-face)
+    ;; Module paths inside using { /Org/Module }
+    (,(rx "using" (+ space) "{" (+ space) (group (+ (any ?/ ?_ ?. word))) (+ space) "}")
      1 font-lock-constant-face)
-    ;; Attributes/specifiers like <public>, <localizes>
-    (,(rx \"<\" (group (+ (or word ?_))) \">\") 1 font-lock-preprocessor-face)
+    ;; String interpolation {expression} within strings
+    (,(rx "\"" (* (or (not (any ?\\ ?\")) (seq ?\\ any)))
+          "{" (group (* (not (any ?}))))  "}"
+          (* (or (not (any ?\\ ?\")) (seq ?\\ any))) "\"") 1 font-lock-variable-name-face)
+    ;; Numbers (integers and floats)
+    (,(rx (or line-start (not (any word ?_)))
+          (group (+ digit) (? "." (+ digit)))
+          (or line-end (not (any word ?_)))) 1 font-lock-constant-face)
+    ;; Attributes with @ syntax like @editable
+    (,(rx "@" (group (+ (or word ?_)))) 1 font-lock-preprocessor-face)
+    ;; Generic attributes/specifiers like <public>, <localizes> (fallback)
+    (,(rx "<" (group (+ (or word ?_))) ">") 1 font-lock-preprocessor-face)
+    ;; Variable names in var declarations
+    (,(rx "var" (+ space) (group (+ (or word ?_))) (* space) ":") 1 font-lock-variable-name-face)
     ))
 
 ;; ----------------------------------------------------------------------------
 ;; Indentation
 ;; ----------------------------------------------------------------------------
-(defun verse--line-indentation ()
-  \"Compute indentation for current line.\"
+(defun verse--current-line-indentation ()
+  "Get the indentation of the current line."
   (save-excursion
     (beginning-of-line)
-    (let ((indent 0)
-          (not-indented t))
-      (while not-indented
-        (setq not-indented nil))
-      indent)))
+    (current-indentation)))
+
+(defun verse--previous-line-indentation ()
+  "Get the indentation of the previous non-empty line."
+  (save-excursion
+    (forward-line -1)
+    (while (and (not (bobp)) (looking-at-p "^[ \t]*$"))
+      (forward-line -1))
+    (current-indentation)))
+
+(defun verse--line-ends-with-opener-p ()
+  "Check if the previous line ends with an opener like : or {."
+  (save-excursion
+    (forward-line -1)
+    (end-of-line)
+    (skip-chars-backward " \t")
+    (skip-chars-backward "#" (line-beginning-position))  ; Skip comments
+    (skip-chars-backward " \t")
+    (memq (char-before) '(?: ?{ ?=))))
+
+(defun verse--line-starts-with-closer-p ()
+  "Check if the current line starts with a closer like } or else."
+  (save-excursion
+    (beginning-of-line)
+    (skip-chars-forward " \t")
+    (or (looking-at-p "}")
+        (looking-at-p "else\\b"))))
 
 (defun verse-indent-line ()
-  \"Indent current line according to Verse simple rules.\"
+  "Indent current line according to Verse indentation rules."
   (interactive)
-  (let* ((indent 0))
-    ;; naive heuristic: increase after lines ending with ':' or '{'
-    (save-excursion
-      (forward-line -1)
-      (when (looking-at \".*[:{][ \t]*\\(#.*\\)?$\")
-        (setq indent (+ (current-indentation) verse-indent-offset))))
-    ;; decrease if current line starts with '}' or 'else'
-    (save-excursion
-      (beginning-of-line)
-      (when (looking-at \"[ \t]*\\(}\\|else\\)\\b\")
-        (setq indent (max 0 (- indent verse-indent-offset)))))
+  (let* ((prev-indent (verse--previous-line-indentation))
+         (indent prev-indent))
+    
+    ;; Increase indent after lines ending with : or { or =
+    (when (verse--line-ends-with-opener-p)
+      (setq indent (+ prev-indent verse-indent-offset)))
+    
+    ;; Decrease indent for lines starting with } or else
+    (when (verse--line-starts-with-closer-p)
+      (setq indent (max 0 (- indent verse-indent-offset))))
+    
     (indent-line-to (max 0 indent))))
 
 ;; ----------------------------------------------------------------------------
 ;; Imenu
 ;; ----------------------------------------------------------------------------
 (defvar verse-imenu-generic-expression
-  `((\"Functions\" ,(rx line-start (* space)
-                      (group (+ (or word ?_ ?.))) (* space) \"(\") 1)
-    (\"Classes\" ,(rx line-start (* space)
-                    (group (+ (or word ?_ ?.))) (* space) \":=\" (* space) \"class\") 1)
-    (\"Modules\" ,(rx line-start (* space)
-                    (group (+ (or word ?_ ?.))) (* space) \":=\" (* space) \"module\") 1))
-  \"Imenu expressions for `verse-mode'.\")
+  `(("Functions" ,(rx line-start (* space)
+                     (group (+ (or word ?_ ?.))) (* space) "(") 1)
+    ("Classes" ,(rx line-start (* space)
+                   (group (+ (or word ?_ ?.))) (* space) ":=" (* space) "class") 1)
+    ("Modules" ,(rx line-start (* space)
+                   (group (+ (or word ?_ ?.))) (* space) ":=" (* space) "module") 1)
+    ("Structs" ,(rx line-start (* space)
+                   (group (+ (or word ?_ ?.))) (* space) ":=" (* space) "struct") 1)
+    ("Enums" ,(rx line-start (* space)
+                 (group (+ (or word ?_ ?.))) (* space) ":=" (* space) "enum") 1))
+  "Imenu expressions for `verse-mode'.")
 
 ;; ----------------------------------------------------------------------------
 ;; Mode definition
 ;; ----------------------------------------------------------------------------
 ;;;###autoload
-(define-derived-mode verse-mode prog-mode \"Verse\"
-  \"Major mode for editing Verse (UEFN) source files.\"
+(define-derived-mode verse-mode prog-mode "Verse"
+  "Major mode for editing Verse (UEFN) source files.
+
+Verse is a functional logic programming language developed by Epic Games
+for use in Unreal Editor for Fortnite (UEFN). This mode provides:
+
+- Comprehensive syntax highlighting for keywords, types, and specifiers
+- Support for single-line (#) and block (<# ... #>) comments
+- Smart indentation based on code structure
+- Imenu support for navigation
+- Auto-mode-alist integration for .verse files
+
+\\{verse-mode-map}"
   :syntax-table verse-mode-syntax-table
   (setq-local font-lock-defaults '(verse-font-lock-keywords))
   (setq-local syntax-propertize-function #'verse--syntax-propertize)
   (setq-local indent-line-function #'verse-indent-line)
-  (setq-local comment-start \"# \")
-  (setq-local comment-end \"\")
-  (setq-local imenu-generic-expression verse-imenu-generic-expression))
+  (setq-local comment-start "# ")
+  (setq-local comment-end "")
+  (setq-local comment-start-skip "#+ *")
+  (setq-local imenu-generic-expression verse-imenu-generic-expression)
+  
+  ;; Electric indentation
+  (setq-local electric-indent-chars '(?{ ?} ?: ?=)))
 
 ;;;###autoload
-(add-to-list 'auto-mode-alist '(\"\\.verse\\'\" . verse-mode))
+(add-to-list 'auto-mode-alist '("\\.verse\\'" . verse-mode))
 
 (provide 'verse-mode)
 ;;; verse-mode.el ends here
