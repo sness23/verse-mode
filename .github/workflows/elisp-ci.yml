@@ -1,0 +1,28 @@
+name: elisp-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Emacs (via apt)
+        run: |
+          sudo add-apt-repository -y ppa:kelleyk/emacs
+          sudo apt-get update
+          sudo apt-get install -y emacs-nox
+      - name: Install Cask
+        run: |
+          python3 -m pip install --user cask-cli || true
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Install deps
+        run: cask install
+      - name: Lint
+        run: make lint
+      - name: Compile
+        run: make compile
+      - name: Test
+        run: make test

@@ -1,0 +1,8 @@
+*~
+\#*\#
+/*.elc
+/.cask/
+/dist/
+/tmp/
+/.ert-runner
+/.DS_Store
