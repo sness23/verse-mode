@@ -1,4 +1,4 @@
-;;; verse-mode.el --- Major mode for Epic's Verse language (UEFN) -*- lexical-binding: t; -*-
+;;; verse-mode.el --- Major mode for Verse -*- lexical-binding: t; -*-
 ;; Author: Steven Ness <sness@sness.net>
 ;; Maintainer: Steven Ness <sness@sness.net>
 ;; Version: 0.0.1
