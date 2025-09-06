@@ -93,9 +93,9 @@
   (funcall
    (syntax-propertize-rules
     ;; Open delimiter: `<#`
-    ((rx "<#") (0 "<"))
-    ;; Close delimiter: `#>`
-    ((rx "#>") (0 ">")))
+    ("<#" (1 (string-to-syntax "< 1")) (2 (string-to-syntax "< 2")))
+    ;; Close delimiter: `#>`  
+    ("#>" (1 (string-to-syntax "> 1")) (2 (string-to-syntax "> 2"))))
    start end))
 
 ;; ----------------------------------------------------------------------------
