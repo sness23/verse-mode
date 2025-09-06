@@ -57,10 +57,10 @@
 ;; ----------------------------------------------------------------------------
 (defvar verse-mode-syntax-table
   (let ((st (make-syntax-table)))
-    ;; Single-line comments start with '#'
-    (modify-syntax-entry ?# "<" st)
+    ;; Don't set # as comment starter in syntax table - handle via syntax-propertize
+    ;; But we need newline as comment ender for single-line comments
     (modify-syntax-entry ?\n ">" st)
-
+    
     ;; Strings: double quotes
     (modify-syntax-entry ?\" "\"" st)
 
@@ -84,19 +84,30 @@
     st)
   "Syntax table for `verse-mode'.")
 
-;; Block comments `<# ... #>` (with nesting allowed in Verse docs).
-;; We mark <# as comment-start and #> as comment-end via syntax-propertize.
+;; Handle both single-line (#) and block comments (<# ... #>).
 (defun verse--syntax-propertize (start end)
-  "Apply syntax properties for Verse block comments between START and END."
+  "Apply syntax properties for Verse comments between START and END."
   (goto-char start)
-  (remove-text-properties start end '(syntax-table))
-  (funcall
-   (syntax-propertize-rules
-    ;; Open delimiter: `<#`
-    ("<#" (1 (string-to-syntax "< 1")) (2 (string-to-syntax "< 2")))
-    ;; Close delimiter: `#>`  
-    ("#>" (1 (string-to-syntax "> 1")) (2 (string-to-syntax "> 2"))))
-   start end))
+  (while (< (point) end)
+    (cond
+     ;; Look for block comment start <#
+     ((looking-at "<#")
+      (put-text-property (point) (+ (point) 1) 'syntax-table (string-to-syntax "<"))
+      (put-text-property (+ (point) 1) (+ (point) 2) 'syntax-table (string-to-syntax " n"))
+      (forward-char 2))
+     ;; Look for block comment end #>
+     ((looking-at "#>")
+      (put-text-property (point) (+ (point) 1) 'syntax-table (string-to-syntax " n"))
+      (put-text-property (+ (point) 1) (+ (point) 2) 'syntax-table (string-to-syntax ">"))
+      (forward-char 2))
+     ;; Look for single-line comment # (not part of #>)
+     ((and (looking-at "#")
+           (not (looking-at "#>"))
+           (or (bolp) (looking-back "[ \t]" 1)))
+      (put-text-property (point) (+ (point) 1) 'syntax-table (string-to-syntax "<"))
+      (forward-char 1))
+     (t
+      (forward-char 1)))))
 
 ;; ----------------------------------------------------------------------------
 ;; Font-lock (keywords and syntax highlighting)
@@ -249,6 +260,9 @@ for use in Unreal Editor for Fortnite (UEFN).  This mode provides:
   (setq-local comment-end "")
   (setq-local comment-start-skip "#+ *")
   (setq-local imenu-generic-expression verse-imenu-generic-expression)
+  
+  ;; Enable font-lock
+  (turn-on-font-lock)
   
   ;; Electric indentation
   (setq-local electric-indent-chars '(?{ ?} ?: ?=)))
