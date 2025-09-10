@@ -7,29 +7,33 @@
 ;; URL: https://github.com/sness23/verse-mode
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 ;;
-;; This file is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
+;; This file is free software; you can redistribute
+;; it and/or modify it under the terms of the GNU
+;; General Public License as published by the Free
+;; Software Foundation, either version 3 of the
+;; License, or (at your option) any later version.
 ;;
-;; This file is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; This file is distributed in the hope that it will
+;; be useful, but WITHOUT ANY WARRANTY; without even
+;; the implied warranty of MERCHANTABILITY or FITNESS
+;; FOR A PARTICULAR PURPOSE.  See the GNU General
+;; Public License for more details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
+;; You should have received a copy of the GNU General
+;; Public License along with this file.  If not, see
+;; <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
-;; verse-mode provides comprehensive editing support for the Verse
-;; programming language used in Unreal Editor for Fortnite (UEFN):
-;; syntax highlighting, comment handling (single-line `#` and block
-;; `<# ... #>`), indentation, Imenu, and `auto-mode-alist` for
-;; `.verse` files.
+;; verse-mode provides comprehensive editing support
+;; for the Verse programming language used in Unreal
+;; Editor for Fortnite (UEFN): syntax highlighting,
+;; comment handling (single-line `#` and block `<#
+;; ... #>`), indentation, Imenu, and
+;; `auto-mode-alist` for `.verse` files.
 ;;
-;; Verse is a functional logic programming language developed by Epic
-;; Games that supports:
+;; Verse is a functional logic programming language
+;; developed by Epic Games that supports:
 ;; - First-class type system with effect system
 ;; - Mutable state and I/O effects
 ;; - Transactional memory
