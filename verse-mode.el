@@ -56,9 +56,9 @@
   :type 'integer
   :group 'verse)
 
-;; -------------------------------------------
+;; ----------------------------------------------------------------------------
 ;; Syntax table
-;; -------------------------------------------
+;; ----------------------------------------------------------------------------
 (defvar verse-mode-syntax-table
   (let ((st (make-syntax-table)))
     (modify-syntax-entry ?\n ">" st)
@@ -244,3 +244,4 @@ for use in Unreal Editor for Fortnite (UEFN).  This mode provides:
 (add-to-list 'auto-mode-alist '("\\.verse\\'" . verse-mode))
 
 (provide 'verse-mode)
+;;; verse-mode.el ends here
