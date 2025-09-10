@@ -56,30 +56,20 @@
   :type 'integer
   :group 'verse)
 
-;; ----------------------------------------------------------------------------
+;; -------------------------------------------
 ;; Syntax table
-;; ----------------------------------------------------------------------------
+;; -------------------------------------------
 (defvar verse-mode-syntax-table
   (let ((st (make-syntax-table)))
-    ;; Don't set # as comment starter in syntax table - handle via syntax-propertize
-    ;; But we need newline as comment ender for single-line comments
     (modify-syntax-entry ?\n ">" st)
-    
-    ;; Strings: double quotes
     (modify-syntax-entry ?\" "\"" st)
-
-    ;; Word constituents: underscore
     (modify-syntax-entry ?_ "w" st)
-
-    ;; Braces, parens, brackets
     (modify-syntax-entry ?\( "()" st)
     (modify-syntax-entry ?\) ")(" st)
     (modify-syntax-entry ?\{ "(}" st)
     (modify-syntax-entry ?\} "){" st)
     (modify-syntax-entry ?\[ "(]" st)
     (modify-syntax-entry ?\] ")[" st)
-
-    ;; Assignment and comparison operators
     (modify-syntax-entry ?: "." st)
     (modify-syntax-entry ?= "." st)
     (modify-syntax-entry ?< "." st)
@@ -88,23 +78,19 @@
     st)
   "Syntax table for `verse-mode'.")
 
-;; Handle both single-line (#) and block comments (<# ... #>).
 (defun verse--syntax-propertize (start end)
   "Apply syntax properties for Verse comments between START and END."
   (goto-char start)
   (while (< (point) end)
     (cond
-     ;; Look for block comment start <#
      ((looking-at "<#")
       (put-text-property (point) (+ (point) 1) 'syntax-table (string-to-syntax "<"))
       (put-text-property (+ (point) 1) (+ (point) 2) 'syntax-table (string-to-syntax " n"))
       (forward-char 2))
-     ;; Look for block comment end #>
      ((looking-at "#>")
       (put-text-property (point) (+ (point) 1) 'syntax-table (string-to-syntax " n"))
       (put-text-property (+ (point) 1) (+ (point) 2) 'syntax-table (string-to-syntax ">"))
       (forward-char 2))
-     ;; Look for single-line comment # (not part of #>)
      ((and (looking-at "#")
            (not (looking-at "#>"))
            (or (bolp) (looking-back "[ \t]" 1)))
@@ -113,9 +99,9 @@
      (t
       (forward-char 1)))))
 
-;; ----------------------------------------------------------------------------
+;; ----------------------------------------------
 ;; Font-lock (keywords and syntax highlighting)
-;; ----------------------------------------------------------------------------
+;; ----------------------------------------------
 (defconst verse--keywords
   '("if" "else" "for" "loop" "break" "continue" "return" "block"
     "var" "set" "module" "class" "struct" "where" "subtype" "enum"
@@ -137,44 +123,32 @@
 
 (defconst verse-font-lock-keywords
   `(
-    ;; Keywords
     (,(regexp-opt verse--keywords 'symbols) . font-lock-keyword-face)
-    ;; Types
     (,(regexp-opt verse--types 'symbols) . font-lock-type-face)
-    ;; Specifiers in angle brackets like <public>, <localizes>
     (,(concat "<\\(" (regexp-opt verse--specifiers) "\\)>") 1 font-lock-builtin-face)
-    ;; Assignment operator :=
     (,(rx ":=") . font-lock-keyword-face)
-    ;; Function definitions: FunctionName(args) : type =
     (,(rx line-start (* space)
           (group (+ (or word ?_ ?.))) (* space)
           "(") 1 font-lock-function-name-face)
-    ;; Class/struct/module definitions: Name := class/struct/module
     (,(rx line-start (* space)
           (group (+ (or word ?_ ?.))) (* space)
           ":=" (* space)
           (or "class" "struct" "module" "enum")) 1 font-lock-type-face)
-    ;; Module paths inside using { /Org/Module }
     (,(rx "using" (+ space) "{" (+ space) (group (+ (any ?/ ?_ ?. word))) (+ space) "}")
      1 font-lock-constant-face)
-    ;; String interpolation {expression} within strings
     (,(rx "\"" (* (or (not (any ?\\ ?\")) (seq ?\\ any)))
           "{" (group (* (not (any ?}))))  "}"
           (* (or (not (any ?\\ ?\")) (seq ?\\ any))) "\"") 1 font-lock-variable-name-face)
-    ;; Numbers (integers and floats)
     (,(rx (or line-start (not (any word ?_)))
           (group (+ digit) (? "." (+ digit)))
           (or line-end (not (any word ?_)))) 1 font-lock-constant-face)
-    ;; Attributes with @ syntax like @editable
     (,(rx "@" (group (+ (or word ?_)))) 1 font-lock-preprocessor-face)
-    ;; Generic attributes/specifiers like <public>, <localizes> (fallback)
     (,(rx "<" (group (+ (or word ?_))) ">") 1 font-lock-preprocessor-face)
-    ;; Variable names in var declarations
     (,(rx "var" (+ space) (group (+ (or word ?_))) (* space) ":") 1 font-lock-variable-name-face)))
 
-;; ----------------------------------------------------------------------------
+;; ---------------------------------------------
 ;; Indentation
-;; ----------------------------------------------------------------------------
+;; ---------------------------------------------
 (defun verse--current-line-indentation ()
   "Get the indentation of the current line."
   (save-excursion
@@ -212,12 +186,9 @@
   (interactive)
   (let* ((prev-indent (verse--previous-line-indentation))
          (indent prev-indent))
-    
-    ;; Increase indent after lines ending with : or { or =
     (when (verse--line-ends-with-opener-p)
       (setq indent (+ prev-indent verse-indent-offset)))
     
-    ;; Decrease indent for lines starting with } or else
     (when (verse--line-starts-with-closer-p)
       (setq indent (max 0 (- indent verse-indent-offset))))
     
@@ -239,9 +210,9 @@
                  (group (+ (or word ?_ ?.))) (* space) ":=" (* space) "enum") 1))
   "Imenu expressions for `verse-mode'.")
 
-;; ----------------------------------------------------------------------------
+;; --------------------------------------------
 ;; Mode definition
-;; ----------------------------------------------------------------------------
+;; --------------------------------------------
 ;;;###autoload
 (define-derived-mode verse-mode prog-mode "Verse"
   "Major mode for editing Verse (UEFN) source files.
@@ -265,14 +236,11 @@ for use in Unreal Editor for Fortnite (UEFN).  This mode provides:
   (setq-local comment-start-skip "#+ *")
   (setq-local imenu-generic-expression verse-imenu-generic-expression)
   
-  ;; Enable font-lock
   (turn-on-font-lock)
   
-  ;; Electric indentation
   (setq-local electric-indent-chars '(?{ ?} ?: ?=)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.verse\\'" . verse-mode))
 
 (provide 'verse-mode)
-;;; verse-mode.el ends here
